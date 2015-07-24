@@ -6,6 +6,7 @@ struct hdmi_delayed_work {
 	struct delayed_work work;
 	struct hdmi *hdmi;
 	int event;
+	int sync;
 	void *data;
 };
 
@@ -18,12 +19,13 @@ struct hdmi_id_ref_info {
 static int uboot_vic;
 static void hdmi_work_queue(struct work_struct *work);
 
-struct delayed_work *hdmi_submit_work(struct hdmi *hdmi,
-				      int event, int delay, void *data)
+void hdmi_submit_work(struct hdmi *hdmi,
+		      int event, int delay, int sync)
 {
 	struct hdmi_delayed_work *work;
 
-	DBG("%s event %04x delay %d\n", __func__, event, delay);
+	DBG("%s event %04x delay %d sync %d\n",
+	    __func__, event, delay, sync);
 
 	work = kmalloc(sizeof(*work), GFP_ATOMIC);
 
@@ -31,16 +33,18 @@ struct delayed_work *hdmi_submit_work(struct hdmi *hdmi,
 		INIT_DELAYED_WORK(&work->work, hdmi_work_queue);
 		work->hdmi = hdmi;
 		work->event = event;
-		work->data = data;
+		work->data = NULL;
+		work->sync = sync;
 		queue_delayed_work(hdmi->workqueue,
 				   &work->work,
 				   msecs_to_jiffies(delay));
+		if (sync) {
+			flush_delayed_work(&work->work);
+			kfree(work);
+		}
 	} else {
 		pr_warn("HDMI: Cannot allocate memory to create work\n");
-		return 0;
 	}
-
-	return &work->work;
 }
 
 static void hdmi_send_uevent(struct hdmi *hdmi, int uevent)
@@ -235,7 +239,7 @@ static void hdmi_wq_insert(struct hdmi *hdmi)
 		#endif
 		hdmi_wq_set_audio(hdmi);
 		hdmi_wq_set_output(hdmi, hdmi->mute);
-		hdmi_submit_work(hdmi, HDMI_ENABLE_HDCP, 100, NULL);
+		hdmi_submit_work(hdmi, HDMI_ENABLE_HDCP, 100, 0);
 		if (hdmi->ops->setcec)
 			hdmi->ops->setcec(hdmi);
 	}
@@ -423,7 +427,8 @@ static void hdmi_work_queue(struct work_struct *work)
 	}
 
 	kfree(hdmi_w->data);
-	kfree(hdmi_w);
+	if (!hdmi_w->sync)
+		kfree(hdmi_w);
 
 	DBG("\nhdmi_work_queue() - exit evt= %x %d\n",
 	    (event & 0xFF00) >> 8,
@@ -598,7 +603,7 @@ int hdmi_config_audio(struct hdmi_audio	*audio)
 		}*/
 		memcpy(&hdmi->audio, audio, sizeof(struct hdmi_audio));
 		if (hdmi->hotplug == HDMI_HPD_ACTIVED)
-			hdmi_submit_work(hdmi, HDMI_SET_AUDIO, 0, NULL);
+			hdmi_submit_work(hdmi, HDMI_SET_AUDIO, 0, 0);
 	}
 	return 0;
 }
@@ -660,9 +665,9 @@ void hdmi_audio_mute(int mute)
 		hdmi = ref_info[i].hdmi;
 
 		if (mute)
-			hdmi_submit_work(hdmi, HDMI_MUTE_AUDIO, 0, NULL);
+			hdmi_submit_work(hdmi, HDMI_MUTE_AUDIO, 0, 0);
 		else
-			hdmi_submit_work(hdmi, HDMI_UNMUTE_AUDIO, 0, NULL);
+			hdmi_submit_work(hdmi, HDMI_UNMUTE_AUDIO, 0, 0);
 	}
 }
 
