@@ -679,7 +679,7 @@ try_again:
          *        has been 1.8v yet.
          */
         #ifdef CONFIG_MMC_DW_ROCKCHIP_SWITCH_VOLTAGE
-        #ifdef CONFIG_AP6335
+        #ifdef CONFIG_RKWIFI
         rocr &= ~R4_18V_PRESENT;
         #endif
         #endif
@@ -700,7 +700,7 @@ try_again:
 		err = 0;
 	} else {
 	        #ifdef CONFIG_MMC_DW_ROCKCHIP_SWITCH_VOLTAGE
-	        #ifdef CONFIG_AP6335
+	        #ifdef CONFIG_RKWIFI
 	        #else
 	        ocr &= ~R4_18V_PRESENT;
 		#endif
