@@ -55,6 +55,11 @@ struct scpi_data_buf {
 	int timeout_ms;
 };
 
+struct scpi_mcu_ver {
+	u32  scpi_ver;
+	char mcu_ver[16];
+};
+
 static int high_priority_cmds[] = {
 	SCPI_CMD_GET_CSS_PWR_STATE,
 	SCPI_CMD_CFG_PWR_STATE_STAT,
@@ -383,23 +388,29 @@ int scpi_get_sensor_value(u16 sensor, u32 *val)
 }
 EXPORT_SYMBOL_GPL(scpi_get_sensor_value);
 
-static int scpi_get_version(u32 old, u32 *ver)
+static int scpi_get_version(u32 old, struct scpi_mcu_ver *ver)
 {
+	int ret;
 	struct scpi_data_buf sdata;
 	struct rockchip_mbox_msg mdata;
 	struct __packed {
 		u32 status;
-		u32 ver;
+		struct scpi_mcu_ver version;
 	} buf;
-	int ret;
 
+	memset(&buf, 0, sizeof(buf));
 	SCPI_SETUP_DBUF(sdata, mdata, SCPI_CL_SYS, SCPI_SYS_GET_VERSION,
 			old, buf);
 
 	ret = scpi_execute_cmd(&sdata);
-	if (ret)
-		*ver = buf.ver;
+	if (ret) {
+		pr_err("get scpi version from MCU failed, ret=%d\n", ret);
+		goto OUT;
+	}
 
+	memcpy(ver, &(buf.version), sizeof(*ver));
+
+OUT:
 	return ret;
 }
 
@@ -585,25 +596,52 @@ static int mobx_scpi_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	int retry = 3;
+<<<<<<< HEAD
 	u32 ver = 0;
 	int check_version = 0; /*0: not check version, 1: check version*/
+=======
+	int val = 0;
+	struct scpi_mcu_ver mcu_ver;
+	int check_version = 1; /*0: not check version, 1: check version*/
+>>>>>>> 7643ffa... RK3368 Scpi: add Scpi version check
 
 	the_scpi_device = &pdev->dev;
 
+	/* try to get mboxes chan nums from DT */
+	if (of_property_read_u32((&pdev->dev)->of_node, "chan-nums", &val)) {
+		dev_err(&pdev->dev, "parse mboxes chan-nums failed\n");
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	max_chan_num = val;
+
+	/* try to check up with SCPI version from MCU */
 	while ((retry--) && (check_version != 0)) {
-		ret = scpi_get_version(SCPI_VERSION, &ver);
-		if ((ret == 0) && (ver == SCPI_VERSION))
+		memset(&mcu_ver, 0, sizeof(mcu_ver));
+
+		ret = scpi_get_version(SCPI_VERSION, &mcu_ver);
+		if ((ret == 0) && (mcu_ver.scpi_ver == SCPI_VERSION))
 			break;
 	}
 
 	if ((retry <= 0) && (check_version != 0)) {
-		dev_err(&pdev->dev, "Failed to get scpi version\n");
+		dev_err(&pdev->dev,
+			"Scpi verison not match:kernel ver:0x%x, MCU ver:0x%x, ret=%d\n",
+			SCPI_VERSION, mcu_ver.scpi_ver, ret);
 		ret = -EIO;
 		goto exit;
 	}
 
+<<<<<<< HEAD
 	dev_info(&pdev->dev,
 		 "Scpi initialize, version: 0x%x\n", ver);
+=======
+	dev_info(&pdev->dev, "Scpi initialize, version: 0x%x, chan nums: %d\n",
+		 mcu_ver.scpi_ver, val);
+	dev_info(&pdev->dev, "MCU version: %s\n", mcu_ver.mcu_ver);
+
+>>>>>>> 7643ffa... RK3368 Scpi: add Scpi version check
 	return 0;
 exit:
 	the_scpi_device = NULL;
