@@ -68,6 +68,8 @@ static struct cpufreq_frequency_table *freq_table[MAX_CLUSTERS];
 #define DISABLE_FURTHER_CPUFREQ         0x10
 #define ENABLE_FURTHER_CPUFREQ          0x20
 #define MASK_FURTHER_CPUFREQ            0x30
+#define CPU_B_SAFE_FREQ    1296000000 /* Hz */
+#define CPU_L_SAFE_FREQ    1008000000 /* Hz */
 #define CPU_LOW_FREQ	600000    /* KHz */
 #define CCI_LOW_RATE	288000000 /* Hz */
 #define CCI_HIGH_RATE	576000000 /* Hz */
@@ -85,6 +87,7 @@ static struct dvfs_node *clk_cpu_dvfs_node[MAX_CLUSTERS];
 static struct dvfs_node *clk_gpu_dvfs_node;
 static struct dvfs_node *clk_ddr_dvfs_node;
 static cpumask_var_t cluster_policy_mask[MAX_CLUSTERS];
+static unsigned long cpu_last_freq[MAX_CLUSTERS];
 static struct clk *aclk_cci;
 static unsigned long cci_rate;
 static unsigned int cpu_bl_freq[MAX_CLUSTERS];
@@ -269,6 +272,7 @@ static int rockchip_bl_cpufreq_scale_rate_for_dvfs(struct clk *clk,
 	/* notifiers */
 	cpufreq_notify_transition(policy, &freqs, CPUFREQ_POSTCHANGE);
 
+	cpu_last_freq[cur_cluster] = rate;
 	cpufreq_cpu_put(policy);
 	return ret;
 }
@@ -426,11 +430,35 @@ rockchip_bl_cpufreq_scale_limit(unsigned int target_freq,
 	return target_freq;
 }
 
+static int rockchip_bl_set_safefreq(int cur_cluster, unsigned long *new_rate)
+{
+	int ret = 0;
+
+	if (cur_cluster == B_CLUSTER) {
+		if (cpu_last_freq[L_CLUSTER] >= CPU_L_SAFE_FREQ &&
+		    *new_rate > CPU_B_SAFE_FREQ) {
+		    *new_rate = CPU_B_SAFE_FREQ;
+		}
+	} else {
+		if (cpu_last_freq[B_CLUSTER] > CPU_B_SAFE_FREQ &&
+		    *new_rate >= CPU_L_SAFE_FREQ &&
+		    clk_cpu_dvfs_node[B_CLUSTER]) {
+			ret = dvfs_clk_set_rate(clk_cpu_dvfs_node[B_CLUSTER],
+						CPU_B_SAFE_FREQ);
+			if (ret != 0)
+				return -EINVAL;
+		}
+	}
+
+	return 0;
+}
+
 static int rockchip_bl_cpufreq_target(struct cpufreq_policy *policy,
 				      unsigned int target_freq,
 				      unsigned int relation)
 {
-	unsigned int i, new_freq = target_freq, new_rate, cur_rate;
+	unsigned int i, new_freq = target_freq;
+	unsigned long new_rate, cur_rate;
 	int ret = 0;
 	bool is_private;
 	u32 cur_cluster = cpu_to_cluster(policy->cpu);
@@ -474,8 +502,11 @@ static int rockchip_bl_cpufreq_target(struct cpufreq_policy *policy,
 	cur_rate = dvfs_clk_get_rate(clk_cpu_dvfs_node[cur_cluster]);
 	FREQ_LOG("req = %7u new = %7u (was = %7u)\n", target_freq,
 		 new_freq, cur_rate / 1000);
+	if (rockchip_bl_set_safefreq(cur_cluster, &new_rate) != 0)
+		goto out;
 	if (new_rate == cur_rate)
 		goto out;
+
 	ret = dvfs_clk_set_rate(clk_cpu_dvfs_node[cur_cluster], new_rate);
 
 out:
