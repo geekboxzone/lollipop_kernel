@@ -1060,6 +1060,9 @@
 					lkg_adjust_volt_table = <
 						/*lkg(mA)  volt(uV)*/
 						0         25000
+						40        0
+						50        25000
+						150       50000
 						>;
 				};
 				clk_core_l_dvfs_table: clk_core_l {
@@ -1092,6 +1095,9 @@
 					lkg_adjust_volt_table = <
 						/*lkg(mA)  volt(uV)*/
 						0         25000
+						40        0
+						50        25000
+						150       50000
 						>;
 				};
 			};
