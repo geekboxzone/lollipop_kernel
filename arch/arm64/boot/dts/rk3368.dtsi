@@ -1055,6 +1055,7 @@
 						>;
 					lkg_adjust_volt_en = <1>;
 					channel = <0>;
+					tsadc-ch = <0>;
 					def_table_lkg = <25>;
 					min_adjust_freq = <216000>;
 					lkg_adjust_volt_table = <
@@ -1090,6 +1091,7 @@
 						>;
 					lkg_adjust_volt_en = <1>;
 					channel = <0>;
+					tsadc-ch = <0>;
 					def_table_lkg = <25>;
 					min_adjust_freq = <216000>;
 					lkg_adjust_volt_table = <
