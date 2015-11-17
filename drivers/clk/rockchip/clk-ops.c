@@ -389,7 +389,10 @@ static int clk_core_set_rate(struct clk_hw *hw, unsigned long rate,
 	}
 
 	ret = parent->ops->set_rate(parent->hw, rate, __clk_get_rate(grand_p));
-	parent->rate = parent->ops->recalc_rate(parent->hw,
+	if (safety_flag == 1 && rate > SAFETY_FREQ)
+		parent->rate = rate;
+	else
+		parent->rate = parent->ops->recalc_rate(parent->hw,
 			__clk_get_rate(grand_p));
 
 	return ret;

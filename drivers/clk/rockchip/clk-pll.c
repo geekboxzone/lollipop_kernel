@@ -2112,7 +2112,10 @@ static int clk_pll_set_rate_3368_apllb(struct clk_hw *hw, unsigned long rate,
 	unsigned long flags;
 	int sel_gpll = 0;
 
-	ps = apll_get_best_set(rate, rk3368_apllb_table);
+	if (safety_flag == 1 && rate > SAFETY_FREQ)
+		ps = apll_get_best_set(SAFETY_FREQ, rk3368_apllb_table);
+	else
+		ps = apll_get_best_set(rate, rk3368_apllb_table);
 	clk_debug("apllb will set rate %lu\n", ps->rate);
 	clk_debug("table con:%08x,%08x,%08x, sel:%08x,%08x\n",
 		  ps->pllcon0, ps->pllcon1, ps->pllcon2,
