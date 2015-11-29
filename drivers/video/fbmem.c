@@ -493,8 +493,13 @@ static int fb_show_logo_line(struct fb_info *info, int rotate,
 		fb_set_logo(info, logo, logo_new, fb_logo.depth);
 	}
 
+	#ifdef CONFIG_LOGO_GEEKBOX_CLUT224
+	image.dx = (info->var.xres/2) - (182/2);
+	image.dy = (info->var.yres/2) - (192/2);
+	#else
 	image.dx = 0;
 	image.dy = y;
+	#endif
 	image.width = logo->width;
 	image.height = logo->height;
 
@@ -505,7 +510,11 @@ static int fb_show_logo_line(struct fb_info *info, int rotate,
 			fb_rotate_logo(info, logo_rotate, &image, rotate);
 	}
 
+	#ifdef CONFIG_LOGO_GEEKBOX_CLUT224
+	fb_do_show_logo(info, &image, rotate, 1);
+	#else
 	fb_do_show_logo(info, &image, rotate, n);
+	#endif
 
 	kfree(palette);
 	if (saved_pseudo_palette != NULL)
