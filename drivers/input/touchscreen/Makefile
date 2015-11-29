@@ -6,6 +6,7 @@
 
 wm97xx-ts-y := wm97xx-core.o
 obj-$(CONFIG_TOUCHSCREEN_ZET62XX)        += zet62xx/
+obj-$(CONFIG_TP_GBOX_GSLX680)	+= geekbox_gslX680.o
 obj-$(CONFIG_TOUCHSCREEN_GSLX680)	+= rockchip_gslX680_rk3128.o
 obj-$(CONFIG_TOUCHSCREEN_CT36X_TS)     += ct36x/
 obj-$(CONFIG_TOUCHSCREEN_GT8XX)		+= rk29_i2c_goodix.o
