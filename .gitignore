@@ -91,3 +91,7 @@ extra_certificates
 signing_key.priv
 signing_key.x509
 x509.genkey
+
+# images
+/kernel.img
+/resource.img
