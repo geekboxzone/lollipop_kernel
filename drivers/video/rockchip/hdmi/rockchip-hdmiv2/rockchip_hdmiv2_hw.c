@@ -478,6 +478,8 @@ static int rockchip_hdmiv2_config_phy(struct hdmi_dev *hdmi_dev)
 				  v_OVERRIDE(1) | v_SLOPEBOOST(0) |
 				  v_TX_SYMON(1) | v_TX_TRAON(0) |
 				  v_TX_TRBON(0) | v_CLK_SYMON(1));
+	if ((hdmi_dev->tmdsclk > 165000000) && (hdmi_dev->tmdsclk < 340000000))
+			rockchip_hdmiv2_write_phy(hdmi_dev, PHYTX_CLKSYMCTRL, 0x8019);
 	if (hdmi_dev->tmdsclk > 340000000) {
 		rockchip_hdmiv2_write_phy(hdmi_dev, PHYTX_TERM_RESIS,
 					  v_TX_TERM(R50_OHMS));
