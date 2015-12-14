@@ -37,7 +37,7 @@
 /* #define GSL_TIMER */
 #define REPORT_DATA_ANDROID_4_0
 
-/* #define HAVE_TOUCH_KEY */
+#define HAVE_TOUCH_KEY
 
 #define GSLX680_I2C_NAME "gslX680"
 #define GSLX680_I2C_ADDR 0x40
@@ -86,16 +86,14 @@ const u16 key_array[] = {
 	KEY_BACK,
 	KEY_HOME,
 	KEY_MENU,
-	KEY_SEARCH,
 	};
 
 #define MAX_KEY_NUM     (sizeof(key_array)/sizeof(key_array[0]))
 
 struct key_data gsl_key_data[MAX_KEY_NUM] = {
-	{KEY_BACK, 2048, 2048, 2048, 2048},
-	{KEY_HOME, 2048, 2048, 2048, 2048},
-	{KEY_MENU, 2048, 2048, 2048, 2048},
-	{KEY_SEARCH, 2048, 2048, 2048, 2048},
+	{KEY_BACK, 1480, 1500, 2084, 2104},
+	{KEY_HOME, 1390, 1410, 2084, 2104},
+	{KEY_MENU, 1300, 1320, 2084, 2104},
 };
 #endif
 
@@ -341,6 +339,9 @@ static void startup_chip(struct i2c_client *client)
 {
 	u8 tmp = 0x00;
 	u8 buf[4] = {0x00};
+#ifdef GSL_NOID_VERSION
+	gsl_DataInit(gsl_config_data_id);
+#endif
 
 	buf[3] = 0x01;
 	buf[2] = 0xfe;
@@ -474,13 +475,27 @@ static void record_point(u16 x, u16 y , u8 id)
 	}
 }
 
+#ifdef HAVE_TOUCH_KEY
+static void report_key(struct gsl_ts *ts, u16 x, u16 y)
+{
+	u16 i = 0;
+
+	for(i = 0; i < MAX_KEY_NUM; i++) 
+	{
+		if((gsl_key_data[i].x_min < x) && (x < gsl_key_data[i].x_max)&&(gsl_key_data[i].y_min < y) && (y < gsl_key_data[i].y_max))
+		{
+			key = gsl_key_data[i].key;	
+			input_report_key(ts->input, key, 1);
+			input_sync(ts->input); 		
+			key_state_flag = 1;
+			break;
+		}
+	}
+}
+#endif
+
 static void report_data(struct gsl_ts *ts, u16 x, u16 y, u8 pressure, u8 id)
 {
-
-	print_info("#####id=%d,x=%d,y=%d######\n", id, x, y);
-	//x = 1024 - x;
-	//y = 600 - y;
-
 	if (x > SCREEN_MAX_X || y > SCREEN_MAX_Y) {
 	#ifdef HAVE_TOUCH_KEY
 		report_key(ts, x, y);
@@ -511,7 +526,45 @@ static void process_gslX680_data(struct gsl_ts *ts)
 	u16 x, y;
 	int i = 0;
 
+#ifdef GSL_NOID_VERSION
+	u32 tmp1;
+	u8 buf[4] = {0};
+	struct gsl_touch_info cinfo = {{0}};
+#endif
+
 	touches = ts->touch_data[ts->dd->touch_index];
+#ifdef GSL_NOID_VERSION
+	cinfo.finger_num = touches;
+	print_info("tp-gsl  finger_num = %d\n",cinfo.finger_num);
+	for(i = 0; i < (touches < MAX_CONTACTS ? touches : MAX_CONTACTS); i ++)
+	{
+		cinfo.x[i] = join_bytes( ( ts->touch_data[ts->dd->x_index  + 4 * i + 1] & 0xf),
+				ts->touch_data[ts->dd->x_index + 4 * i]);
+		cinfo.y[i] = join_bytes(ts->touch_data[ts->dd->y_index + 4 * i + 1],
+				ts->touch_data[ts->dd->y_index + 4 * i ]);
+		cinfo.id[i] = ((ts->touch_data[ts->dd->x_index  + 4 * i + 1] & 0xf0)>>4);
+		print_info("tp-gsl  before: x[%d] = %d, y[%d] = %d, id[%d] = %d \n",i,cinfo.x[i],i,cinfo.y[i],i,cinfo.id[i]);
+	}
+	cinfo.finger_num=(ts->touch_data[3]<<24)|(ts->touch_data[2]<<16)
+		|(ts->touch_data[1]<<8)|(ts->touch_data[0]);
+	gsl_alg_id_main(&cinfo);
+	tmp1=gsl_mask_tiaoping();
+	print_info("[tp-gsl] tmp1=%x\n",tmp1);
+	if(tmp1>0&&tmp1<0xffffffff)
+	{
+		buf[0]=0xa;buf[1]=0;buf[2]=0;buf[3]=0;
+		gsl_ts_write(ts->client,0xf0,buf,4);
+		buf[0]=(u8)(tmp1 & 0xff);
+		buf[1]=(u8)((tmp1>>8) & 0xff);
+		buf[2]=(u8)((tmp1>>16) & 0xff);
+		buf[3]=(u8)((tmp1>>24) & 0xff);
+		print_info("tmp1=%08x,buf[0]=%02x,buf[1]=%02x,buf[2]=%02x,buf[3]=%02x\n",
+			tmp1,buf[0],buf[1],buf[2],buf[3]);
+		gsl_ts_write(ts->client,0x8,buf,4);
+	}
+	touches = cinfo.finger_num;
+#endif
+	
 	for (i = 1; i <= MAX_CONTACTS; i++) {
 		if (touches == 0)
 			id_sign[i] = 0;
@@ -519,9 +572,15 @@ static void process_gslX680_data(struct gsl_ts *ts)
 	}
 
 	for (i = 0; i < (touches > MAX_FINGERS ? MAX_FINGERS : touches); i++) {
+	#ifdef GSL_NOID_VERSION
+		id = cinfo.id[i];
+		x =  cinfo.x[i];
+		y =  cinfo.y[i];	
+	#else
 		x = join_bytes((ts->touch_data[ts->dd->x_index + 4*i + 1] & 0xf), ts->touch_data[ts->dd->x_index + 4*i]);
 		y = join_bytes(ts->touch_data[ts->dd->y_index + 4*i + 1], ts->touch_data[ts->dd->y_index + 4*i]);
 		id = ts->touch_data[ts->dd->id_index + 4*i] >> 4;
+	#endif
 
 		if (1 <= id && id <= MAX_CONTACTS) {
 		#ifdef FILTER_POINT
@@ -545,18 +604,18 @@ static void process_gslX680_data(struct gsl_ts *ts)
 		}
 		id_state_old_flag[i] = id_state_flag[i];
 	}
-#ifndef REPORT_DATA_ANDROID_4_0
-	if (0 == touches) {
-		input_mt_sync(ts->input);
 	#ifdef HAVE_TOUCH_KEY
+	if (0 == touches) {
+	#ifndef REPORT_DATA_ANDROID_4_0
+		input_mt_sync(ts->input);
+	#endif
 		if (key_state_flag) {
 			input_report_key(ts->input, key, 0);
 			input_sync(ts->input);
 			key_state_flag = 0;
 		}
-	#endif
 	}
-#endif
+	#endif
 	input_sync(ts->input);
 }
 
@@ -639,6 +698,9 @@ static int gsl_ts_init_ts(struct i2c_client *client, struct gsl_ts *ts)
 	struct tp_platform_data *pdata = client->dev.platform_data;
 #endif
 	int rc = 0;
+#ifdef HAVE_TOUCH_KEY
+	int i;
+#endif
 
 	print_info("[GSLX680] Enter %s\n", __func__);
 
@@ -681,7 +743,7 @@ static int gsl_ts_init_ts(struct i2c_client *client, struct gsl_ts *ts)
 #endif
 
 #ifdef HAVE_TOUCH_KEY
-	input_device->evbit[0] = BIT_MASK(EV_KEY);
+	input_device->evbit[0] = BIT_MASK(EV_SYN) | BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 	for (i = 0; i < MAX_KEY_NUM; i++)
 		set_bit(key_array[i], input_device->keybit);
 #endif
