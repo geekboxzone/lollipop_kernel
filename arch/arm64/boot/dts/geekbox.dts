@@ -60,7 +60,7 @@
 	};
 
 	rockchip-hdmi-i2s {
-		status = "disabled";
+		status = "okay";
 		compatible = "rockchip-hdmi-i2s";
 		dais {
 			dai0 {
@@ -80,16 +80,6 @@
 				};
 			};
 		};
-	rockchip-rk1000 {
-		compatible = "rockchip-rk1000";
-		dais {
-			dai0 {
-				audio-codec = <&rk1000_codec>;
-				i2s-controller = <&i2s0>;
-				format = "i2s";
-			};
-		};
-	};
 	power-led {
 		compatible = "gpio-leds";
 		blue {
@@ -244,15 +234,7 @@
 };
 
 &i2c1 {
-	status = "okay";
-	rk1000_codec: rk1000_codec@60 {
-		compatible = "rockchip,rk1000_codec";
-		reg = <0x60>;
-		spk_ctl_io = <&gpio3 GPIO_D7 GPIO_ACTIVE_LOW>;
-		boot_depop = <1>;
-		pa_enable_time = <5000>;
-		status = "okay";
-	};
+	status = "disabled";
 };
 
 &i2c2 {
