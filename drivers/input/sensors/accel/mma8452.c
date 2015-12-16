@@ -347,8 +347,8 @@ static int sensor_report_value(struct i2c_client *client)
 	y = sensor_convert_data(sensor->client, buffer[3], buffer[2]);
 	z = sensor_convert_data(sensor->client, buffer[5], buffer[4]);		
 
-	axis.y = (pdata->orientation[0])*x + (pdata->orientation[1])*y + (pdata->orientation[2])*z;
-	axis.x = (pdata->orientation[3])*x + (pdata->orientation[4])*y + (pdata->orientation[5])*z; 
+	axis.x = (pdata->orientation[0])*x + (pdata->orientation[1])*y + (pdata->orientation[2])*z;
+	axis.y = (pdata->orientation[3])*x - (pdata->orientation[4])*y + (pdata->orientation[5])*z; 
 	axis.z = (pdata->orientation[6])*x + (pdata->orientation[7])*y - (pdata->orientation[8])*z;
 
 	DBG( "%s: axis = %d  %d  %d \n", __func__, axis.x, axis.y, axis.z);
