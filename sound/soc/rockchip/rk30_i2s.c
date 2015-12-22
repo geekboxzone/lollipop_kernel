@@ -693,11 +693,19 @@ static int rockchip_i2s_probe(struct platform_device *pdev)
 
 	i2s->playback_dma_data.addr = regs_base + I2S_TXR_BUFF;
 	i2s->playback_dma_data.addr_width = 4;
+	#ifdef CONFIG_GEEKBOX_UBUNTU
+	i2s->playback_dma_data.maxburst = 1;
+	#else
 	i2s->playback_dma_data.maxburst = 16;
+	#endif
 
 	i2s->capture_dma_data.addr = regs_base + I2S_RXR_BUFF;
 	i2s->capture_dma_data.addr_width = 4;
+	#ifdef CONFIG_GEEKBOX_UBUNTU
+	i2s->capture_dma_data.maxburst = 1;
+	#else
 	i2s->capture_dma_data.maxburst = 16;
+	#endif
 
 	i2s->i2s_tx_status = false;
 	i2s->i2s_rx_status = false;
