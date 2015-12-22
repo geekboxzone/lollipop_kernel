@@ -957,7 +957,12 @@ static int  gsl_ts_probe(struct i2c_client *client,
 		goto error_req_irq_fail;
 	}
 
+	#ifndef CONFIG_GEEKBOX_UBUNTU
 	disable_irq(client->irq);
+	#else
+	enable_irq(client->irq);
+	#endif
+
 
 	ret = gsl_ts_read(client, 0xf0, &read_buf, sizeof(read_buf));
 	if (ret  < 0) {
