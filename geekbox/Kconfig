@@ -1,0 +1,8 @@
+menu "Geekbox Platform Options"
+
+	config GEEKBOX_UBUNTU
+		bool "Ubuntu or other Linux Distros support"
+		default n
+
+endmenu
+
