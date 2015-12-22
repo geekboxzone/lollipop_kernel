@@ -128,6 +128,8 @@ config IOMMU_HELPER
 config FIX_EARLYCON_MEM
 	def_bool y
 
+source "geekbox/Kconfig"
+
 source "init/Kconfig"
 
 source "kernel/Kconfig.freezer"
