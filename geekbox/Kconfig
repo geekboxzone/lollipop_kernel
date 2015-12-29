@@ -4,5 +4,9 @@ menu "Geekbox Platform Options"
 		bool "Ubuntu or other Linux Distros support"
 		default n
 
+	config GEEKBOX_OVERCLOCK
+		bool "Overclock support"
+		default n
+
 endmenu
 

@@ -239,6 +239,16 @@ static const struct pll_clk_set rk312xplus_pll_com_table[] = {
 
 static const struct apll_clk_set rk3368_apllb_table[] = {
 			/*(_mhz,	nr,	nf,	no,	aclkm,	atclk,	pclk_dbg)*/
+	#ifdef CONFIG_GEEKBOX_OVERCLOCK
+	_RK3368_APLL_SET_CLKS(1992, 1,  83, 1,  2,  6,  6),
+	_RK3368_APLL_SET_CLKS(1944, 1,  81, 1,  2,  6,  6),
+	_RK3368_APLL_SET_CLKS(1896, 1,  79, 1,  2,  6,  6),
+	_RK3368_APLL_SET_CLKS(1848, 1,  77, 1,  2,  6,  6),
+	_RK3368_APLL_SET_CLKS(1800, 1,  75, 1,  2,  6,  6),
+	_RK3368_APLL_SET_CLKS(1752, 1,  73, 1,  2,  6,  6),
+	_RK3368_APLL_SET_CLKS(1704, 1,  71, 1,  2,  6,  6),
+	_RK3368_APLL_SET_CLKS(1656, 1,  69, 1,  2,  6,  6),
+	#endif
 	_RK3368_APLL_SET_CLKS(1608,	1,	67,	1,	2,	6,	6),
 	_RK3368_APLL_SET_CLKS(1560,	1,	65,	1,	2,	6,	6),
 	_RK3368_APLL_SET_CLKS(1512,	1,	63,	1,	2,	6,	6),
@@ -285,6 +295,16 @@ static const struct apll_clk_set rk3368_apllb_table[] = {
 
 static const struct apll_clk_set rk3368_aplll_table[] = {
 			/*(_mhz,	nr,	nf,	no,	aclkm,	atclk,	pclk_dbg)*/
+	#ifdef CONFIG_GEEKBOX_OVERCLOCK
+	_RK3368_APLL_SET_CLKS(1992, 1,  83, 1,  2,  7,  7),
+	_RK3368_APLL_SET_CLKS(1944, 1,  81, 1,  2,  7,  7),
+	_RK3368_APLL_SET_CLKS(1896, 1,  79, 1,  2,  7,  7),
+	_RK3368_APLL_SET_CLKS(1848, 1,  77, 1,  2,  7,  7),
+	_RK3368_APLL_SET_CLKS(1800, 1,  75, 1,  2,  7,  7),
+	_RK3368_APLL_SET_CLKS(1752, 1,  73, 1,  2,  7,  7),
+	_RK3368_APLL_SET_CLKS(1704, 1,  71, 1,  2,  7,  7),
+	_RK3368_APLL_SET_CLKS(1656, 1,  69, 1,  2,  7,  7),
+	#endif
 	_RK3368_APLL_SET_CLKS(1608,	1,	67,	1,	2,	7,	7),
 	_RK3368_APLL_SET_CLKS(1560,	1,	65,	1,	2,	7,	7),
 	_RK3368_APLL_SET_CLKS(1512,	1,	63,	1,	2,	7,	7),
