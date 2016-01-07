@@ -503,6 +503,7 @@ static void report_data(struct gsl_ts *ts, u16 x, u16 y, u8 pressure, u8 id)
 		return;
 	}
 
+	y = SCREEN_MAX_Y - y;
 #ifdef REPORT_DATA_ANDROID_4_0
 	input_mt_slot(ts->input, id);
 	input_report_abs(ts->input, ABS_MT_TRACKING_ID, id);
