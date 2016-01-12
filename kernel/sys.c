@@ -505,6 +505,8 @@ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
 
 	mutex_lock(&reboot_mutex);
 	switch (cmd) {
+	case LINUX_REBOOT_CMD_RESTART_RAMFS:
+		kernel_restart("ramfs");
 	case LINUX_REBOOT_CMD_RESTART:
 		kernel_restart(NULL);
 		break;

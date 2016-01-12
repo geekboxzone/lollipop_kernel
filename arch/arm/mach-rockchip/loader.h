@@ -17,6 +17,7 @@ enum {
     BOOT_FASTBOOT,   /* enter fast boot mode */
     BOOT_SECUREBOOT_DISABLE,
     BOOT_CHARGING,   /* enter charge mode */
+    BOOT_RAMFS,
     BOOT_MAX         /* MAX VALID BOOT TYPE.*/
 };
 

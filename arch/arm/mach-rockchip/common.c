@@ -264,6 +264,9 @@ void rockchip_restart_get_boot_mode(const char *cmd, u32 *flag, u32 *mode)
 		else if (!strcmp(cmd, "charge")) {
 			*flag = SYS_LOADER_REBOOT_FLAG + BOOT_CHARGING;
 			*mode = BOOT_MODE_CHARGE;
+		}else if(!strcmp(cmd, "ramfs")){
+			*flag = SYS_LOADER_REBOOT_FLAG + BOOT_RAMFS;
+			*mode = BOOT_MODE_RAMFS;
 		}
 	} else {
 		if (is_panic)
