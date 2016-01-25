@@ -298,6 +298,7 @@
 &hdmi {
 	status = "okay";
 	rockchip,cec_enable = <1>;
+	rockchip,defaultmode = <16>;
 };
 
 &adc {
