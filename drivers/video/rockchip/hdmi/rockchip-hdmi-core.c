@@ -484,12 +484,16 @@ struct hdmi *rockchip_hdmi_register(struct hdmi_property *property,
 	hdmi->hotplug = HDMI_HPD_REMOVED;
 	hdmi->autoset = HDMI_AUTO_CONFIG;
 	if (uboot_vic > 0) {
+		#ifdef CONFIG_GEEKBOX_UBUNTU
+		hdmi->vic = hdmi->property->defaultmode;
+		#else
 		hdmi->vic = uboot_vic & HDMI_UBOOT_VIC_MASK;
 		if (uboot_vic & HDMI_UBOOT_NOT_INIT)
 			hdmi->uboot = 0;
 		else
 			hdmi->uboot = 1;
 		hdmi->autoset = 0;
+		#endif
 	} else if (hdmi->autoset) {
 		hdmi->vic = 0;
 	} else {
