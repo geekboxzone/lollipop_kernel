@@ -619,17 +619,17 @@
 	ir_key1{
 		rockchip,usercode = <0xff00>;
 		rockchip,key_table =
-            <0xeb   KEY_POWER>,
-            <0xec   KEY_MENU>,
-            <0xfc   KEY_UP>,
-            <0xfd   KEY_DOWN>,
-            <0xf1   KEY_LEFT>,
-            <0xe5   KEY_RIGHT>,
-            <0xf8   KEY_REPLY>,
-            <0xa7   KEY_VOLUMEDOWN>,
-            <0xa3   388>,
-            <0xf4   KEY_VOLUMEUP>,
-            <0xfe   KEY_BACK>,
-            <0xb7   KEY_HOME>;
+            <0xeb   KEY_POWER	KEY_POWER>,
+            <0xec   KEY_F8		KEY_DELETE>,
+            <0xfc   KEY_UP		REL_Y>,
+            <0xfd   KEY_DOWN	REL_Y>,
+            <0xf1   KEY_LEFT	REL_X>,
+            <0xe5   KEY_RIGHT	REL_X>,
+            <0xf8   KEY_ENTER	BTN_MIDDLE>,
+            <0xa7   KEY_F9		BTN_LEFT>,
+            <0xa3   388			388>,
+            <0xf4   KEY_F10		BTN_RIGHT>,
+            <0xfe   KEY_BACK	KEY_BACKSPACE>,
+            <0xb7   KEY_HOME	KEY_HOMEPAGE>;
 	};
 };

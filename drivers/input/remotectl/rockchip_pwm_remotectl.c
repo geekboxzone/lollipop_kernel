@@ -15,6 +15,9 @@
 
 
 
+#define FUNMODE_INIT	0x00
+#define FUNMODE_KEY		388
+
 /*sys/module/rk_pwm_remotectl/parameters,
 modify code_print to change the value*/
 
@@ -40,6 +43,7 @@ module_param_named(dbg_level, rk_remote_pwm_dbg_level, int, 0644);
 struct rkxx_remote_key_table {
 	int scancode;
 	int keycode;
+	int funcode;
 };
 
 struct rkxx_remotectl_button {
@@ -58,6 +62,8 @@ struct rkxx_remotectl_drvdata {
 	int keynum;
 	int maxkeybdnum;
 	int keycode;
+	int funcode;
+	int funmode;
 	int press;
 	int pre_press;
 	int period;
@@ -100,6 +106,7 @@ static int remotectl_keycode_lookup(struct rkxx_remotectl_drvdata *ddata)
 		    keydata) {
 			ddata->keycode =
 			remotectl_button[ddata->keynum].key_table[i].keycode;
+			ddata->funcode = remotectl_button[ddata->keynum].key_table[i].funcode;
 			return 1;
 		}
 	}
@@ -150,7 +157,7 @@ static int rk_remotectl_parse_ir_keys(struct platform_device *pdev)
 		of_get_property(child_node, "rockchip,key_table", &len);
 		len /= sizeof(u32);
 		DBG("len=0x%x\n",len);
-		remotectl_button[boardnum].nbuttons = len/2;
+		remotectl_button[boardnum].nbuttons = len/3;
 		if(of_property_read_u32_array(child_node, "rockchip,key_table",
 			 (u32 *)remotectl_button[boardnum].key_table, len)) {
 			dev_err(&pdev->dev, "Missing key_table property in the DTS.\n");
@@ -228,9 +235,21 @@ static void rk_pwm_remotectl_do_something(unsigned long  data)
 		if ((ddata->scandata&0x0ff) ==
 		    ((~ddata->scandata >> 8) & 0x0ff)) {
 			if (remotectl_keycode_lookup(ddata)) {
+				if (ddata->keycode == FUNMODE_KEY || ddata->funcode == FUNMODE_KEY)
+					ddata->funmode ^= 0x1;
+
 				ddata->press = 1;
-				input_event(ddata->input, EV_KEY,
-					    ddata->keycode, 1);
+				if (ddata->funmode) {
+					if (ddata->funcode == REL_X || ddata->funcode == REL_Y)
+						input_report_rel(ddata->input, (ddata->funcode == REL_X) ? REL_X : REL_Y,
+							(ddata->keycode == KEY_UP || ddata->keycode == KEY_LEFT) ? -15 : 10);
+					else {
+						input_event(ddata->input, EV_KEY, ddata->funcode, 1);
+						input_event(ddata->input, EV_KEY, ddata->funcode, 0);
+					}
+				} else {
+					input_event(ddata->input, EV_KEY, ddata->keycode, 1);
+				}
 				input_sync(ddata->input);
 				ddata->state = RMC_SEQUENCE;
 			} else {
@@ -496,6 +515,7 @@ static int rk_pwm_probe(struct platform_device *pdev)
 	}
 	ddata->irq = irq;
 	ddata->wakeup = 1;
+	ddata->funmode = FUNMODE_INIT;
 	of_property_read_u32(np, "remote_pwm_id", &pwm_id);
 	ddata->remote_pwm_id = pwm_id;
 	DBG("remotectl: remote pwm id=0x%x\n", pwm_id);
@@ -512,8 +532,12 @@ static int rk_pwm_probe(struct platform_device *pdev)
 
 			input_set_capability(input, type, remotectl_button[j].
 					     key_table[i].keycode);
+			input_set_capability(input, EV_KEY, remotectl_button[j].
+					     key_table[i].funcode);
 		}
 	}
+	input_set_capability(input, EV_REL, REL_X);
+	input_set_capability(input, EV_REL, REL_Y);
 	ret = input_register_device(input);
 	if (ret)
 		pr_err("remotectl: register input device err, ret: %d\n", ret);
