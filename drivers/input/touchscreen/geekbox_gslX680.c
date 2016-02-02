@@ -84,7 +84,7 @@ struct key_data {
 
 const u16 key_array[] = {
 	KEY_BACK,
-	KEY_HOME,
+	KEY_HOMEPAGE,
 	KEY_MENU,
 	};
 
@@ -92,7 +92,7 @@ const u16 key_array[] = {
 
 struct key_data gsl_key_data[MAX_KEY_NUM] = {
 	{KEY_BACK, 1480, 1500, 2084, 2104},
-	{KEY_HOME, 1390, 1410, 2084, 2104},
+	{KEY_HOMEPAGE, 1390, 1410, 2084, 2104},
 	{KEY_MENU, 1300, 1320, 2084, 2104},
 };
 #endif
