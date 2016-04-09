@@ -34,7 +34,7 @@
 #include <linux/regmap.h>
 #include "es8316.h"
 
-#if 1
+#if 0
 #define DBG(x...) printk(x)
 #else
 #define DBG(x...) do { } while (0)
