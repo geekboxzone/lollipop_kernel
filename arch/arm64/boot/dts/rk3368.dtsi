@@ -1336,7 +1336,6 @@
 		rockchip,isp,csiphy,reg = <0xff96C000 0x4000>;
 		rockchip,grf = <&grf>;
 		rockchip,cru = <&cru>;
-		rockchip,gpios = <&gpio3 GPIO_C4 GPIO_ACTIVE_HIGH>;
 		rockchip,isp,iommu_enable = <1>;
 		status = "okay";
 	};
