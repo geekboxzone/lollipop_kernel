@@ -80,6 +80,13 @@
 				};
 			};
 		};
+
+	fan {
+		compatible = "gbox-fan";
+		ctrl-gpio = <&gpio3 GPIO_B3 GPIO_ACTIVE_HIGH>;
+		trig-temp = <60>;
+	};
+
 	power-led {
 		compatible = "gpio-leds";
 		blue {
