@@ -12,6 +12,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/rockchip/common.h>
 #include <linux/rockchip/dvfs.h>
+#include <linux/workqueue.h>
 
 #define GBOX_FAN_TRIG_TEMP		50	// 50 degree if not set
 #define GBOX_FAN_LOOP_SECS 		30 * HZ	// 30 seconds
@@ -28,34 +29,46 @@ struct gbox_fan_data {
 	struct platform_device *pdev;
 	struct regulator *regulator;
 	struct class *class;
+	struct delayed_work work;
 	enum gbox_fan_mode mode;
 	int	ctrl_gpio;
 	int	trig_temp;
 };
 
-static void gbox_fan_mode_set(struct gbox_fan_data  *fan_data)
+static void fan_work_func(struct work_struct *_work)
 {
 	int temp = INVALID_TEMP;
 	int volt;
+	struct gbox_fan_data *fan_data = container_of(_work,
+		   struct gbox_fan_data, work.work);
 
+	volt = regulator_get_voltage(fan_data->regulator);
+	temp = rockchip_tsadc_get_temp(0, volt);
+	//printk("__Fan: temp[%d], mode[%d].\n", temp, fan_data->mode);
+	if (temp > fan_data->trig_temp && temp != INVALID_TEMP)
+		gpio_set_value(fan_data->ctrl_gpio, GBOX_FAN_GPIO_ON);
+	else
+		gpio_set_value(fan_data->ctrl_gpio, GBOX_FAN_GPIO_OFF);
+
+	schedule_delayed_work(&fan_data->work, GBOX_FAN_LOOP_SECS);
+}
+
+static void gbox_fan_mode_set(struct gbox_fan_data  *fan_data)
+{
 	switch (fan_data->mode) {
 	case GBOX_FAN_STATE_OFF:
+		cancel_delayed_work(&fan_data->work);
 		gpio_set_value(fan_data->ctrl_gpio, GBOX_FAN_GPIO_OFF);
 		break;
 
 	case GBOX_FAN_STATE_ON:
+		cancel_delayed_work(&fan_data->work);
 		gpio_set_value(fan_data->ctrl_gpio, GBOX_FAN_GPIO_ON);
 		break;
 
 	case GBOX_FAN_STATE_AUTO:
 		// FIXME: achieve with a better way
-		volt = regulator_get_voltage(fan_data->regulator);
-		temp = rockchip_tsadc_get_temp(0, volt);
-		//printk("__Fan: temp[%d], mode[%d].\n", temp, fan_data->mode);
-		if (temp > fan_data->trig_temp && temp != INVALID_TEMP)
-			gpio_set_value(fan_data->ctrl_gpio, GBOX_FAN_GPIO_ON);
-		else
-			gpio_set_value(fan_data->ctrl_gpio, GBOX_FAN_GPIO_OFF);
+		schedule_delayed_work(&fan_data->work, GBOX_FAN_LOOP_SECS);
 		break;
 
 	default:
@@ -114,6 +127,8 @@ static int gbox_fan_probe(struct platform_device *pdev)
 	fan_data->mode = GBOX_FAN_STATE_OFF;
 
 	fan_data->regulator = regulator_get(dev, "vdd_arm");
+
+	INIT_DELAYED_WORK(&fan_data->work, fan_work_func);
 
 	fan_data->pdev = pdev;
 	platform_set_drvdata(pdev, fan_data);
