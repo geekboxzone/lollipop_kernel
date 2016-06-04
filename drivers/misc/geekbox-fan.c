@@ -16,6 +16,7 @@
 
 #define GBOX_FAN_TRIG_TEMP		50	// 50 degree if not set
 #define GBOX_FAN_LOOP_SECS 		30 * HZ	// 30 seconds
+#define GBOX_FAN_LOOP_NODELAY_SECS      0
 #define GBOX_FAN_GPIO_OFF		0
 #define GBOX_FAN_GPIO_ON		1
 
@@ -68,7 +69,7 @@ static void gbox_fan_mode_set(struct gbox_fan_data  *fan_data)
 
 	case GBOX_FAN_STATE_AUTO:
 		// FIXME: achieve with a better way
-		schedule_delayed_work(&fan_data->work, GBOX_FAN_LOOP_SECS);
+		schedule_delayed_work(&fan_data->work, GBOX_FAN_LOOP_NODELAY_SECS);
 		break;
 
 	default:
